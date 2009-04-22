@@ -216,7 +216,7 @@ namespace Equinox
             return Rev(RadiansToDegrees(B / Math.Pow(10, 8)));
         }
 
-        public static double RadiusVector(string Planet, double JDE, int acuracyLevel)
+        public static double CalculateRadiusVector(string Planet, double JDE, int acuracyLevel)
         {
             int count = Convert.ToInt32(SQL.ExecuteScalar("SELECT  COUNT(DISTINCT series) FROM vsop87 WHERE planet = '" + Planet + "' AND series LIKE('R%');"));
             count--;
@@ -390,6 +390,7 @@ namespace Equinox
         #endregion
         #region Public Static Functions
         public static HoursMinutesSeconds FromDecimal(double d) { return new HoursMinutesSeconds(d); }
+        public static HoursMinutesSeconds FromAngle(double d) { return new HoursMinutesSeconds(d / 15); }
         #endregion
     }
 }

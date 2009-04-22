@@ -98,7 +98,7 @@ namespace Equinox
         {
             double L = MathHelper.CalculateHelocentricLongitude("EARTH", JDE, 5);
             double B = MathHelper.CalculateHelocentricLatitude("EARTH", JDE, 4);
-            double R = MathHelper.RadiusVector("EARTH", JDE, 5);
+            double R = MathHelper.CalculateRadiusVector("EARTH", JDE, 5);
             double dL, dB, aberration;
             MathHelper.CorrectLB(L, B, JDE, out dL, out  dB);
             aberration = -(20.4898 / R);
