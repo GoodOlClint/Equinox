@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
+﻿
 namespace Equinox.Planets
 {
     public class Mercury : PlanetaryBase
     {
         public override string PlanetName { get { return "Mercury"; } }
 
-        protected override void  BuildLongitude()
+        protected override void BuildLongitude()
         {
             this.PeriodicTerms.Add(new PeriodicTerm("L0", 4.40250710144, 0, 0));
             this.PeriodicTerms.Add(new PeriodicTerm("L0", 0.40989414976, 1.48302034194, 26087.9031415742));
@@ -2821,7 +2817,7 @@ namespace Equinox.Planets
             this.PeriodicTerms.Add(new PeriodicTerm("L5", 0, 2.11315496491, 313054.83769889));
         }
 
-        protected override void  BuildLatitude()
+        protected override void BuildLatitude()
         {
             this.PeriodicTerms.Add(new PeriodicTerm("B0", 0.11737528962, 1.98357498767, 26087.9031415742));
             this.PeriodicTerms.Add(new PeriodicTerm("B0", 0.02388076996, 5.03738959685, 52175.8062831484));

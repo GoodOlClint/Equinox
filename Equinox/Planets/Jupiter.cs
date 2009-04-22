@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace Equinox
+﻿
+namespace Equinox.Planets
 {
     public class Jupiter : PlanetaryBase
     {
         public override string PlanetName { get { return "Jupiter"; } }
 
-        protected override void  BuildLongitude()
+        protected override void BuildLongitude()
         {
             this.PeriodicTerms.Add(new PeriodicTerm("L0", 0.59954691495, 0, 0));
             this.PeriodicTerms.Add(new PeriodicTerm("L0", 0.09695898711, 5.06191793105, 529.6909650946));

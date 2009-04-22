@@ -1,11 +1,11 @@
 ﻿
-namespace Equinox
+namespace Equinox.Planets
 {
     class Earth : PlanetaryBase
     {
         public override string PlanetName { get { return "Earth"; } }
 
-        protected override void  BuildLongitude()
+        protected override void BuildLongitude()
         {
             this.PeriodicTerms.Add(new PeriodicTerm("L0", 1.75347045673, 0.00000000000, 0.00000000000));
             this.PeriodicTerms.Add(new PeriodicTerm("L0", 0.03341656456, 4.66925680417, 6283.07584999140));
