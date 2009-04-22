@@ -1,37 +1,50 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Equinox
 {
     public class AdvancedDateTime
     {
         #region Private Members
-        private int year, day, hour, minute, second, millisecond;
-        private Month month;
-        private Era era;
+        //private int year, day, hour, minute, second, millisecond;
+        //private Month month;
+        //private Era era;
+        private Dictionary<string, int> Properties = new Dictionary<string, int>();
         #endregion
 
         #region Constructors
-        public AdvancedDateTime() { }
+        public AdvancedDateTime()
+        {
+            this.Properties["Era"] = (int)Era.AD;
+            this.Properties["Year"] = 0;
+            this.Properties["Month"] = (int)Month.January;
+            this.Properties["Day"] = 1;
+            this.Properties["Hour"] = 0;
+            this.Properties["Minutes"] = 0;
+            this.Properties["Seconds"] = 0;
+            this.Properties["Milliseconds"] = 0;
+        }
         public AdvancedDateTime(int year, Month month, int day) : this(year, month, day, 0, 0, 0) { }
         public AdvancedDateTime(int year, Month month, int day, int hour, int minute, int second) : this(year, month, day, hour, minute, second, 0) { }
         public AdvancedDateTime(int year, Month month, int day, int hour, int minute, int second, int millisecond)
+            : this()
         {
             if (year <= 0)
             {
-                this.era = Era.BC;
-                this.year = Math.Abs(year) + 1;
+                this.Era = Era.BC;
+                this.Year = Math.Abs(year) + 1;
             }
             else
             {
-                this.era = Era.AD;
-                this.year = year;
+                this.Era = Era.AD;
+                this.Year = year;
             }
-            this.month = month;
-            this.day = day;
-            this.hour = hour;
-            this.minute = minute;
-            this.second = second;
-            this.millisecond = millisecond;
+            this.Month = month;
+            this.Day = day;
+            this.Hour = hour;
+            this.Minute = minute;
+            this.Second = second;
+            this.Millisecond = millisecond;
         }
 
         public AdvancedDateTime(Era era, int year, Month month, int day, int hour, int minute, int second, int millisecond)
@@ -41,54 +54,26 @@ namespace Equinox
                 throw new InvalidCastException("a nagative year is not allowed when the era is set");
             }
 
-            this.era = era;
-            this.year = year;
-            this.month = month;
-            this.day = day;
-            this.hour = hour;
-            this.minute = minute;
-            this.second = second;
-            this.millisecond = millisecond;
+            this.Era = era;
+            this.Year = year;
+            this.Month = month;
+            this.Day = day;
+            this.Hour = hour;
+            this.Minute = minute;
+            this.Second = second;
+            this.Millisecond = millisecond;
         }
         #endregion
 
         #region Public Properties
-        public Era Era { get { return this.era; } set { this.era = value; } }
-        public int Year
-        {
-            get { return this.year; }
-            set
-            {
-                this.year = value;
-            }
-        }
-        public Month Month
-        {
-            get { return this.month; }
-            set
-            {
-                this.month = value;
-            }
-        }
-        public int Day
-        {
-            get { return this.day; }
-            set
-            {
-                this.day = value;
-            }
-        }
-        public int Hour
-        {
-            get { return this.hour; }
-            set
-            {
-                this.hour = value;
-            }
-        }
-        public int Minute { get { return this.minute; } set { this.minute = value; } }
-        public int Second { get { return this.second; } set { this.second = value; } }
-        public int Millisecond { get { return this.millisecond; } set { this.millisecond = value; } }
+        public Era Era { get { return (Era)this.Properties["Era"]; } set { this.Properties["Era"] = (int)value; } }
+        public int Year { get { return this.Properties["Year"]; } set { this.SetYear(value); } }
+        public Month Month { get { return (Month)this.Properties["Month"]; } set { this.SetMonth((int)value); } }
+        public int Day { get { return this.Properties["Day"]; } set { this.SetDays(value); } }
+        public int Hour { get { return this.Properties["Hour"]; } set { this.SetHours(value); } }
+        public int Minute { get { return this.Properties["Minutes"]; } set { this.SetMinutes(value); } }
+        public int Second { get { return this.Properties["Seconds"]; } set { this.SetSeconds(value); } }
+        public int Millisecond { get { return this.Properties["Milliseconds"]; } set { this.SetMilliseconds(value); } }
         #endregion
 
         #region Public Static Functions
@@ -181,13 +166,13 @@ namespace Equinox
         {
             int Y, M;
             double D;
-            if (this.era == Era.BC)
+            if (this.Era == Era.BC)
             {
-                Y = (this.year * (int)this.era) - 1;
+                Y = (this.Year * (int)this.Era) - 1;
             }
-            else { Y = this.year; }
-            M = (int)this.month;
-            D = this.day;
+            else { Y = this.Year; }
+            M = (int)this.Month;
+            D = this.Day;
             if (M <= 2)
             {
                 Y = Y - 1;
@@ -211,10 +196,10 @@ namespace Equinox
         public DateTime ToDateTime()
         {
             DateTime ret = DateTime.Now;
-            switch (this.era)
+            switch (this.Era)
             {
                 case Era.AD:
-                    ret = new DateTime(this.year, (int)this.month, this.day, this.hour, this.minute, this.second);
+                    ret = new DateTime(this.Year, (int)this.Month, this.Day, this.Hour, this.Minute, this.Second);
                     break;
                 case Era.BC:
                     throw new InvalidCastException("BC dates are not representable in a System.DateTime Type");
@@ -222,120 +207,126 @@ namespace Equinox
             return ret;
         }
 
-        public bool IsLeapYear() { return (((year % 4) == 0) && ((year % 100) != 0) || ((year % 400) == 0)); }
+        public bool IsLeapYear() { return (((this.Year % 4) == 0) && ((this.Year % 100) != 0) || ((this.Year % 400) == 0)); }
 
         public void AddMilliseconds(int milliseconds)
         {
-            int value = this.Millisecond + milliseconds;
-            int v = MathHelper.Rev(value, 1000);
-            if (value != v)
-            {
-                if (value < 0)
-                {
-                    int d = (Math.Abs(value) / 1000);
-                    if (v != 0)
-                    { d = d + 1; }
-                    this.SubtractSeconds(d);
-                }
+            this.SetMilliseconds(this.Millisecond + milliseconds);
+            //int value = this.Millisecond + milliseconds;
+            //int v = MathHelper.Rev(value, 1000);
+            //if (value != v)
+            //{
+            //    if (value < 0)
+            //    {
+            //        int d = (Math.Abs(value) / 1000);
+            //        if (v != 0)
+            //        { d = d + 1; }
+            //        this.SubtractSeconds(d);
+            //    }
 
-                else { int d = value / 1000; this.AddSeconds(d); }
-            }
-            this.Millisecond = v;
+            //    else { int d = value / 1000; this.AddSeconds(d); }
+            //}
+            //this.Millisecond = v;
         }
         public void AddSeconds(int seconds)
         {
-            int value = this.Second + seconds;
-            int v = MathHelper.Rev(value, 60);
-            if (value != v)
-            {
-                if (value < 0)
-                {
-                    int d = (Math.Abs(value) / 60);
-                    if (v != 0)
-                    { d = d + 1; }
-                    this.SubtractMinutes(d);
-                }
+            this.SetSeconds(this.Second + seconds);
+            //int value = this.Second + seconds;
+            //int v = MathHelper.Rev(value, 60);
+            //if (value != v)
+            //{
+            //    if (value < 0)
+            //    {
+            //        int d = (Math.Abs(value) / 60);
+            //        if (v != 0)
+            //        { d = d + 1; }
+            //        this.SubtractMinutes(d);
+            //    }
 
-                else { int d = value / 60; this.AddMinutes(d); }
-            }
-            this.Second = v;
+            //    else { int d = value / 60; this.AddMinutes(d); }
+            //}
+            //this.Second = v;
         }
         public void AddMinutes(int minutes)
         {
-            int value = this.Minute + minutes;
-            int v = MathHelper.Rev(value, 60);
-            if (value != v)
-            {
-                if (value < 0)
-                {
-                    int d = (Math.Abs(value) / 60);
-                    if (v != 0)
-                    { d = d + 1; }
-                    this.SubtractHours(d);
-                }
+            this.SetMinutes(this.Minute + minutes);
+            //int value = this.Minute + minutes;
+            //int v = MathHelper.Rev(value, 60);
+            //if (value != v)
+            //{
+            //    if (value < 0)
+            //    {
+            //        int d = (Math.Abs(value) / 60);
+            //        if (v != 0)
+            //        { d = d + 1; }
+            //        this.SubtractHours(d);
+            //    }
 
-                else { int d = value / 60; this.AddHours(d); }
-            }
-            this.Minute = v;
+            //    else { int d = value / 60; this.AddHours(d); }
+            //}
+            //this.Minute = v;
         }
         public void AddHours(int hours)
         {
-            int value = this.Hour + hours;
-            int v = MathHelper.Rev(value, 24);
-            if (value != v)
-            {
-                if (value < 0)
-                {
-                    int d = (Math.Abs(value) / 24);
-                    if (v != 0)
-                    { d = d + 1; }
-                    this.SubtractDays(d);
-                }
+            this.SetHours(this.Hour + hours);
+            //int value = this.Hour + hours;
+            //int v = MathHelper.Rev(value, 24);
+            //if (value != v)
+            //{
+            //    if (value < 0)
+            //    {
+            //        int d = (Math.Abs(value) / 24);
+            //        if (v != 0)
+            //        { d = d + 1; }
+            //        this.SubtractDays(d);
+            //    }
 
-                else { int d = value / 24; this.AddDays(d); }
-            }
-            this.Hour = v;
+            //    else { int d = value / 24; this.AddDays(d); }
+            //}
+            //this.Hour = v;
         }
         public void AddDays(int days)
         {
-            int value = this.Day + days;
-            int monthLength = MonthLength(this.Month, this.Year);
-            int v = MathHelper.Rev(value, monthLength + 1);
-            if (v == 0) v++;
-            if (value != v)
-            {
-                if (value <= 0)
-                {
-                    if (v == 1) v -= 2;
-                    int d = (Math.Abs(value) / monthLength);
-                    if (v != 0)
-                    { d = d + 1; }
-                    this.SubtractMonths(d);
-                }
+            this.SetDays(this.Day + days);
+            //int value = this.Day + days;
+            //int monthLength = MonthLength(this.Month, this.Year);
+            //int v = MathHelper.Rev(value, monthLength + 1);
+            //if (v == 0) v++;
+            //if (value != v)
+            //{
+            //    if (value <= 0)
+            //    {
+            //        if (v == 1) v -= 2;
+            //        int d = (Math.Abs(value) / monthLength);
+            //        if (v != 0)
+            //        { d = d + 1; }
+            //        this.SubtractMonths(d);
+            //    }
 
-                else { int d = value / monthLength; this.AddMonths(d); }
-            }
-            this.Day = MathHelper.Rev(v, monthLength + 1);
+            //    else { int d = value / monthLength; this.AddMonths(d); }
+            //}
+            //this.Day = MathHelper.Rev(v, monthLength + 1);
         }
         public void AddMonths(int months)
         {
-            int value = (int)this.Month + months;
-            int v = MathHelper.Rev(value, 13);
-            if (v == 0) v++;
-            if (value != v)
-            {
-                if (value <= 0)
-                {
-                    if (v == 1) v -= 2;
-                    int d = (Math.Abs(value) / 12);
-                    if (v != 0)
-                    { d = d + 1; }
-                    this.SubtractYears(d);
-                }
+            this.SetMonth((int)this.Month + months);
+            //int value = (int)this.Month + months;
+            //int v = MathHelper.Rev(value, 13);
+            //if (v == 0) v++;
+            //if (value != v)
+            //{
+            //    if (value <= 0)
+            //    {
+            //        if (v == 1) v -= 2;
+            //        int d = (Math.Abs(value) / 12);
+            //        if (v != 0)
+            //        { d = d + 1; }
+            //        this.SubtractYears(d);
+            //    }
 
-                else { int d = value / 12; this.AddYears(d); }
-            }
-            this.Month = (Month)MathHelper.Rev(v, 13);
+            //    else { int d = value / 12; this.AddYears(d); }
+            //}
+            //this.Month = (Month)MathHelper.Rev(v, 13);
         }
         public void AddYears(int years)
         { this.Year = this.Year + years; }
@@ -354,6 +345,121 @@ namespace Equinox
         public void SubtractYears(int years)
         { AddYears(-years); }
 
+        #endregion
+
+        #region Private Functions
+        private void SetMilliseconds(int value)
+        {
+            int v = MathHelper.Rev(value, 1000);
+            if (value != v)
+            {
+                if (value < 0)
+                {
+                    int d = (Math.Abs(value) / 1000);
+                    if (v != 0)
+                    { d = d + 1; }
+                    this.SubtractSeconds(d);
+                }
+
+                else { int d = value / 1000; this.AddSeconds(d); }
+            }
+            this.Properties["Milliseconds"] = v;
+        }
+        private void SetSeconds(int value)
+        {
+            int v = MathHelper.Rev(value, 60);
+            if (value != v)
+            {
+                if (value < 0)
+                {
+                    int d = (Math.Abs(value) / 60);
+                    if (v != 0)
+                    { d = d + 1; }
+                    this.SubtractMinutes(d);
+                }
+
+                else { int d = value / 60; this.AddMinutes(d); }
+            }
+            this.Properties["Seconds"] = v;
+        }
+        private void SetMinutes(int value)
+        {
+            int v = MathHelper.Rev(value, 60);
+            if (value != v)
+            {
+                if (value < 0)
+                {
+                    int d = (Math.Abs(value) / 60);
+                    if (v != 0)
+                    { d = d + 1; }
+                    this.SubtractHours(d);
+                }
+
+                else { int d = value / 60; this.AddHours(d); }
+            }
+            this.Properties["Minutes"] = v;
+        }
+        public void SetHours(int value)
+        {
+            int v = MathHelper.Rev(value, 24);
+            if (value != v)
+            {
+                if (value < 0)
+                {
+                    int d = (Math.Abs(value) / 24);
+                    if (v != 0)
+                    { d = d + 1; }
+                    this.SubtractDays(d);
+                }
+
+                else { int d = value / 24; this.AddDays(d); }
+            }
+            this.Properties["Hour"] = v;
+        }
+        private void SetDays(int value)
+        {
+            int monthLength = MonthLength(this.Month, this.Year);
+            int v = MathHelper.Rev(value, monthLength + 1);
+            if (v == 0) v++;
+            if (value != v)
+            {
+                if (value <= 0)
+                {
+                    if (v == 1) v -= 2;
+                    int d = (Math.Abs(value) / monthLength);
+                    if (v != 0)
+                    { d = d + 1; }
+                    this.SubtractMonths(d);
+                }
+
+                else { int d = value / monthLength; this.AddMonths(d); }
+            }
+            this.Properties["Day"] = MathHelper.Rev(v, monthLength + 1);
+        }
+        private void SetMonth(int value)
+        {
+            int v = MathHelper.Rev(value, 13);
+            if (v == 0) v++;
+            if (value != v)
+            {
+                if (value <= 0)
+                {
+                    if (v == 1) v -= 2;
+                    int d = (Math.Abs(value) / 12);
+                    if (v != 0)
+                    { d = d + 1; }
+                    this.SubtractYears(d);
+                }
+
+                else { int d = value / 12; this.AddYears(d); }
+            }
+            this.Properties["Month"] = MathHelper.Rev(v, 13);
+        }
+        private void SetYear(int value)
+        {
+            if ((int)this.Properties["Year"] <= 0) { this.Properties["Era"] = (int)Era.BC; this.Properties["Year"] = -value; }
+            else { this.Properties["Era"] = (int)Era.AD; this.Properties["Year"] = value; }
+        }
         #endregion
     }
 

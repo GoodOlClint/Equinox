@@ -31,7 +31,7 @@ namespace Equinox
             //for (int i = 1996; i <= 2005; i++)
             //{
             double JDE;
-            JDE = Equinox.GetEquinox(1962, Equinox.EquinoxType.VernalEquinox);
+            JDE = Equinox.GetApproximateEquinox(1962, Equinox.EquinoxType.SumerSolstice);
             AdvancedDateTime ADT = AdvancedDateTime.FromJulianDay(JDE);
             Console.WriteLine("{0}/{1}/{2} {3:00}:{4:00}:{5:00}\t{6}", ADT.Year, (int)ADT.Month, ADT.Day, ADT.Hour, ADT.Minute, ADT.Second, ADT.Era);
             //}

@@ -35,10 +35,10 @@ namespace Equinox
 
         public static double GetVernalEquinox(int year)
         {
-            return GetEquinox(year, EquinoxType.VernalEquinox);
+            return GetApproximateEquinox(year, EquinoxType.VernalEquinox);
         }
 
-        public static double GetEquinox(int year, EquinoxType type)
+        public static double GetApproximateEquinox(int year, EquinoxType type)
         {
             double Y;
             double JDE0 = 0;
@@ -85,11 +85,12 @@ namespace Equinox
             int S;
             T = (JDE0 - 2451545.0) / 36525;
             T = Math.Round(T, 9);
-            W = (DegreeToRadian(35999.373) * T) - DegreeToRadian(2.47);
+            //W = (DegreeToRadian(35999.373) * T) - DegreeToRadian(2.47);
+            W = DegreeToRadian((35999.373 * T) - 2.47);
             D = 1 + (0.0334 * Math.Cos(W)) + (0.0007 * Math.Cos(2 * W));
             D = Math.Round(D, 4);
             S = CalculateSolPeriodicTerms(T);
-            double JDE1 = CorrectEquinox(JDE0, type);
+            //double JDE1 = CorrectEquinox(JDE0, type);
             double JDE = Math.Round(JDE0 + ((0.00001 * S) / D), 5);
             return JDE;
         }
@@ -188,7 +189,7 @@ namespace Equinox
             S += CalculatePeriodicTerms(14, 199.76, 31436.921, T);
             S += CalculatePeriodicTerms(12, 95.39, 14577.848, T);
             S += CalculatePeriodicTerms(12, 287.11, 31931.756, T);
-            S += CalculatePeriodicTerms(12, 230.81, 34777.259, T);
+            S += CalculatePeriodicTerms(12, 320.81, 34777.259, T);
             S += CalculatePeriodicTerms(9, 227.73, 1222.114, T);
             S += CalculatePeriodicTerms(8, 15.45, 16859.074, T);
             return INT(S);
@@ -196,9 +197,9 @@ namespace Equinox
 
         public static double CalculatePeriodicTerms(double A, double B, double C, double T)
         {
-            B = DegreeToRadian(B);
-            C = DegreeToRadian(C);
-            return A * Math.Cos(B + (C * T));
+            /*B = DegreeToRadian(B);
+            C = DegreeToRadian(C);*/
+            return A * Math.Cos(DegreeToRadian(B + (C * T)));
         }
 
         public static int INT(double input)
