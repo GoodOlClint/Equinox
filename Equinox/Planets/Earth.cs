@@ -4,7 +4,8 @@ namespace Equinox
     class Earth : PlanetaryBase
     {
         public override string PlanetName { get { return "Earth"; } }
-        protected override void BuildLatitude()
+
+        protected override void  BuildLongitude()
         {
             this.PeriodicTerms.Add(new PeriodicTerm("L0", 1.75347045673, 0.00000000000, 0.00000000000));
             this.PeriodicTerms.Add(new PeriodicTerm("L0", 0.03341656456, 4.66925680417, 6283.07584999140));
@@ -1088,7 +1089,7 @@ namespace Equinox
             this.PeriodicTerms.Add(new PeriodicTerm("L5", 0.00000000005, 1.75600058765, 18849.22754997420));
         }
 
-        protected override void BuildLongitude()
+        protected override void BuildLatitude()
         {
             this.PeriodicTerms.Add(new PeriodicTerm("B0", 0.00000279620, 3.19870156017, 84334.66158130820));
             this.PeriodicTerms.Add(new PeriodicTerm("B0", 0.00000101643, 5.42248619256, 5507.55323866740));

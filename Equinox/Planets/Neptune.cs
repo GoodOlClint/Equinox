@@ -9,7 +9,7 @@ namespace Equinox.Planets
     {
         public override string PlanetName { get { return "Neptune"; } }
 
-        protected override void BuildLatitude()
+        protected override void  BuildLongitude()
         {
             this.PeriodicTerms.Add(new PeriodicTerm("L0", 5.31188633047, 0, 0));
             this.PeriodicTerms.Add(new PeriodicTerm("L0", 0.01798475509, 2.9010127305, 38.1330356378));
@@ -694,7 +694,7 @@ namespace Equinox.Planets
             this.PeriodicTerms.Add(new PeriodicTerm("L5", 0.00000000874, 3.14159265359, 0));
         }
 
-        protected override void BuildLongitude()
+        protected override void  BuildLatitude()
         {
             this.PeriodicTerms.Add(new PeriodicTerm("B0", 0.03088622933, 1.44104372626, 38.1330356378));
             this.PeriodicTerms.Add(new PeriodicTerm("B0", 0.00027780087, 5.91271882843, 76.2660712756));
