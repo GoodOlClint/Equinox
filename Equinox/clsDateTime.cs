@@ -457,7 +457,7 @@ namespace Equinox
         }
         private void SetYear(int value)
         {
-            if ((int)this.Properties["Year"] <= 0) { this.Properties["Era"] = (int)Era.BC; this.Properties["Year"] = -value; }
+            if (value <= 0) { this.Properties["Era"] = (int)Era.BC; this.Properties["Year"] = -value; }
             else { this.Properties["Era"] = (int)Era.AD; this.Properties["Year"] = value; }
         }
         #endregion

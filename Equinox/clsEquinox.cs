@@ -85,7 +85,6 @@ namespace Equinox
             int S;
             T = (JDE0 - 2451545.0) / 36525;
             T = Math.Round(T, 9);
-            //W = (DegreeToRadian(35999.373) * T) - DegreeToRadian(2.47);
             W = DegreeToRadian((35999.373 * T) - 2.47);
             D = 1 + (0.0334 * Math.Cos(W)) + (0.0007 * Math.Cos(2 * W));
             D = Math.Round(D, 4);
@@ -95,64 +94,22 @@ namespace Equinox
             return JDE;
         }
 
-        public static double CorrectEquinox(double JDE0, EquinoxType Equinox)
+        public static double CorrectEquinox(double JDE, EquinoxType Equinox)
         {
-            double L = 0;
-            double B = 0;
-            double R = 0;
-            double T = 10 * ((JDE0 - 2451545.0) / 365250);
-            SQL.Database = "Equinox.db";
-            SQLiteDataReader dr = SQL.ExecuteReader("SELECT A, B, C FROM VSOP87 WHERE planet = 'EARTH' AND series LIKE('L%');");
-            bool nextResult = true;
-            while (nextResult)
-            {
-                while (dr.Read())
-                {
-                    double A, b, C;
-                    A = Convert.ToDouble((string)dr[0]) * Math.Pow(10, 8);
-                    b = Convert.ToDouble((string)dr[1]);
-                    C = Convert.ToDouble((string)dr[2]);
-                    L += CalculatePeriodicTerms(A, b, C, JDE0);
-                }
-                nextResult = dr.NextResult();
-            }
-            dr = SQL.ExecuteReader("SELECT A, B, C FROM VSOP87 WHERE planet = 'EARTH' AND series LIKE('B%');");
-            nextResult = true;
-            while (nextResult)
-            {
-                while (dr.Read())
-                {
-                    double A, b, C;
-                    A = Convert.ToDouble((string)dr[0]) * Math.Pow(10, 8);
-                    b = Convert.ToDouble((string)dr[1]);
-                    C = Convert.ToDouble((string)dr[2]);
-                    B += CalculatePeriodicTerms(A, b, C, JDE0);
-                }
-                nextResult = dr.NextResult();
-            }
-            dr = SQL.ExecuteReader("SELECT A, B, C FROM VSOP87 WHERE planet = 'EARTH' AND series LIKE('R%');");
-            nextResult = true;
-            while (nextResult)
-            {
-                while (dr.Read())
-                {
-                    double A, b, C;
-                    A = Convert.ToDouble((string)dr[0]) * Math.Pow(10, 8);
-                    b = Convert.ToDouble((string)dr[1]);
-                    C = Convert.ToDouble((string)dr[2]);
-                    R += CalculatePeriodicTerms(A, b, C, JDE0);
-                }
-                nextResult = dr.NextResult();
-            }
-            double gLat, gLong;
-            gLong = L + DegreeToRadian(180);
-            gLat = -B;
-            double LonP;
-            LonP = gLong - (DegreeToRadian(1.397) * T) - (DegreeToRadian(0.00031) * Math.Pow(T, 2));
-            return 58 * Math.Sin(DegreeToRadian(90) - LonP);
-            //double gLatP, gLongP;
-            //gLatP = 
-            //return 0;
+            double L = MathHelper.CalculateHelocentricLongitude("EARTH", JDE, 5);
+            double B = MathHelper.CalculateHelocentricLatitude("EARTH", JDE, 4);
+            double R = MathHelper.RadiusVector("EARTH", JDE, 5);
+            double dL, dB, aberration;
+            MathHelper.CorrectLB(L, B, JDE, out dL, out  dB);
+            aberration = -(20.4898 / R);
+            double ApparentGeocentricLongitude;
+            ApparentGeocentricLongitude = L - 180 - ((12.965 / 60) / 60) + ((dL / 60) / 60) + ((aberration / 60) / 60);
+            double correction = 58 * MathHelper.Sin((int)Equinox * 90 - ApparentGeocentricLongitude);
+            double JDE0 = JDE + correction;
+            if (correction <= 0.0000005)
+            { return Math.Round(JDE0,5);; }
+            else
+            { return CorrectEquinox(JDE0, Equinox); }
         }
 
         public static double rev(double x)
@@ -168,57 +125,39 @@ namespace Equinox
         public static int CalculateSolPeriodicTerms(double T)
         {
             double S;
-            S = CalculatePeriodicTerms(485, 324.96, 1934.136, T);
-            S += CalculatePeriodicTerms(203, 337.23, 32964.467, T);
-            S += CalculatePeriodicTerms(199, 342.08, 20.186, T);
-            S += CalculatePeriodicTerms(182, 27.85, 445267.112, T);
-            S += CalculatePeriodicTerms(156, 73.14, 45036.886, T);
-            S += CalculatePeriodicTerms(136, 171.52, 22518.443, T);
-            S += CalculatePeriodicTerms(77, 222.54, 65928.934, T);
-            S += CalculatePeriodicTerms(74, 296.72, 3034.906, T);
-            S += CalculatePeriodicTerms(70, 243.58, 9037.513, T);
-            S += CalculatePeriodicTerms(58, 119.81, 33718.147, T);
-            S += CalculatePeriodicTerms(52, 297.17, 150.678, T);
-            S += CalculatePeriodicTerms(50, 21.02, 2281.226, T);
-            S += CalculatePeriodicTerms(45, 247.54, 29929.562, T);
-            S += CalculatePeriodicTerms(44, 325.15, 31555.956, T);
-            S += CalculatePeriodicTerms(29, 60.93, 4443.417, T);
-            S += CalculatePeriodicTerms(18, 155.12, 67555.328, T);
-            S += CalculatePeriodicTerms(17, 288.79, 4562.452, T);
-            S += CalculatePeriodicTerms(16, 198.04, 62894.029, T);
-            S += CalculatePeriodicTerms(14, 199.76, 31436.921, T);
-            S += CalculatePeriodicTerms(12, 95.39, 14577.848, T);
-            S += CalculatePeriodicTerms(12, 287.11, 31931.756, T);
-            S += CalculatePeriodicTerms(12, 320.81, 34777.259, T);
-            S += CalculatePeriodicTerms(9, 227.73, 1222.114, T);
-            S += CalculatePeriodicTerms(8, 15.45, 16859.074, T);
-            return INT(S);
-        }
-
-        public static double CalculatePeriodicTerms(double A, double B, double C, double T)
-        {
-            /*B = DegreeToRadian(B);
-            C = DegreeToRadian(C);*/
-            return A * Math.Cos(DegreeToRadian(B + (C * T)));
-        }
-
-        public static int INT(double input)
-        {
-            int ret = (int)Math.Truncate(input);
-            return ret;
-        }
-
-        public static double DEC(double input)
-        {
-            return Math.Round(input - INT(input), 4);
+            S = MathHelper.CalculatePeriodicTerms(485, 324.96, 1934.136, T);
+            S += MathHelper.CalculatePeriodicTerms(203, 337.23, 32964.467, T);
+            S += MathHelper.CalculatePeriodicTerms(199, 342.08, 20.186, T);
+            S += MathHelper.CalculatePeriodicTerms(182, 27.85, 445267.112, T);
+            S += MathHelper.CalculatePeriodicTerms(156, 73.14, 45036.886, T);
+            S += MathHelper.CalculatePeriodicTerms(136, 171.52, 22518.443, T);
+            S += MathHelper.CalculatePeriodicTerms(77, 222.54, 65928.934, T);
+            S += MathHelper.CalculatePeriodicTerms(74, 296.72, 3034.906, T);
+            S += MathHelper.CalculatePeriodicTerms(70, 243.58, 9037.513, T);
+            S += MathHelper.CalculatePeriodicTerms(58, 119.81, 33718.147, T);
+            S += MathHelper.CalculatePeriodicTerms(52, 297.17, 150.678, T);
+            S += MathHelper.CalculatePeriodicTerms(50, 21.02, 2281.226, T);
+            S += MathHelper.CalculatePeriodicTerms(45, 247.54, 29929.562, T);
+            S += MathHelper.CalculatePeriodicTerms(44, 325.15, 31555.956, T);
+            S += MathHelper.CalculatePeriodicTerms(29, 60.93, 4443.417, T);
+            S += MathHelper.CalculatePeriodicTerms(18, 155.12, 67555.328, T);
+            S += MathHelper.CalculatePeriodicTerms(17, 288.79, 4562.452, T);
+            S += MathHelper.CalculatePeriodicTerms(16, 198.04, 62894.029, T);
+            S += MathHelper.CalculatePeriodicTerms(14, 199.76, 31436.921, T);
+            S += MathHelper.CalculatePeriodicTerms(12, 95.39, 14577.848, T);
+            S += MathHelper.CalculatePeriodicTerms(12, 287.11, 31931.756, T);
+            S += MathHelper.CalculatePeriodicTerms(12, 320.81, 34777.259, T);
+            S += MathHelper.CalculatePeriodicTerms(9, 227.73, 1222.114, T);
+            S += MathHelper.CalculatePeriodicTerms(8, 15.45, 16859.074, T);
+            return MathHelper.INT(S);
         }
 
         public enum EquinoxType : int
         {
-            VernalEquinox = 1,
-            SumerSolstice = 2,
-            AutumnEquinox = 3,
-            WinterSolstice = 4
+            VernalEquinox = 0,
+            SumerSolstice = 1,
+            AutumnEquinox = 2,
+            WinterSolstice = 3
         }
     }
 }

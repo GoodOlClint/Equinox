@@ -8,7 +8,7 @@ namespace Equinox
 {
     public class SQL
     {
-        public static string Database;
+        public static string Database = "Equinox.db";
         public static int ExecuteNonQuery(string query)
         {
             SQLiteConnection sqlCon = new SQLiteConnection();

@@ -41,6 +41,7 @@
     <Compile Include="clsDateTime.cs" />
     <Compile Include="clsEquinox.cs" />
     <Compile Include="clsMathHelper.cs" />
+    <Compile Include="clsPlanetaryBase.cs" />
     <Compile Include="ParseVSPO87.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
