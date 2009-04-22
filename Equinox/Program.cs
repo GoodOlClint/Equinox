@@ -68,8 +68,8 @@ namespace Equinox
             //aberration = 20.4898 / R;
             //double ApparentGeocentricLongitude;
             //ApparentGeocentricLongitude = L - 180 + dL + aberration;
-            double JDE0 = Equinox.GetApproximateEquinox(2009, Equinox.EquinoxType.VernalEquinox);
-            double JDE = Equinox.CorrectEquinox(JDE0, Equinox.EquinoxType.VernalEquinox);
+            double JDE0 = Equinox.GetApproximateEquinox(1962, Equinox.EquinoxType.SumerSolstice);
+            double JDE = Equinox.CorrectEquinox(JDE0, Equinox.EquinoxType.SumerSolstice);
             AdvancedDateTime ADT = AdvancedDateTime.FromJulianDay(JDE);
             Console.WriteLine("{0}/{1}/{2} {3:00}:{4:00}:{5:00}\t{6}", ADT.Year, ADT.Month, ADT.Day, ADT.Hour, ADT.Minute, ADT.Second, ADT.Era);
             //}

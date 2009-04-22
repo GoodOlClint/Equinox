@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Data.SQLite;
 
 namespace Equinox
 {
@@ -96,18 +95,19 @@ namespace Equinox
 
         public static double CorrectEquinox(double JDE, EquinoxType Equinox)
         {
-            double L = MathHelper.CalculateHelocentricLongitude("EARTH", JDE, 5);
-            double B = MathHelper.CalculateHelocentricLatitude("EARTH", JDE, 4);
-            double R = MathHelper.CalculateRadiusVector("EARTH", JDE, 5);
+            Earth earth = new Earth();
+            double L = earth.CalculateHelocentricLongitude(JDE, 5);
+            double B = earth.CalculateHelocentricLatitude(JDE, 4);
+            double R = earth.CalculateRadiusVector(JDE, 5);
             double dL, dB, aberration;
-            MathHelper.CorrectLB(L, B, JDE, out dL, out  dB);
+            earth.CorrectLB(L, B, JDE, out dL, out  dB);
             aberration = -(20.4898 / R);
             double ApparentGeocentricLongitude;
             ApparentGeocentricLongitude = L - 180 - (12.965 / 3600) + (dL / 3600) + (aberration / 3600);
             double correction = 58 * MathHelper.Sin((int)Equinox * 90 - ApparentGeocentricLongitude);
             double JDE0 = JDE + correction;
             if (correction <= 0.0000005)
-            { return Math.Round(JDE0,5);; }
+            { return Math.Round(JDE0, 5); ; }
             else
             { return CorrectEquinox(JDE0, Equinox); }
         }
@@ -151,7 +151,6 @@ namespace Equinox
             S += MathHelper.CalculatePeriodicTerms(8, 15.45, 16859.074, T);
             return MathHelper.INT(S);
         }
-
         public enum EquinoxType : int
         {
             VernalEquinox = 0,
