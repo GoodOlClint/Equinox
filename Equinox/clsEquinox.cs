@@ -103,7 +103,7 @@ namespace Equinox
             MathHelper.CorrectLB(L, B, JDE, out dL, out  dB);
             aberration = -(20.4898 / R);
             double ApparentGeocentricLongitude;
-            ApparentGeocentricLongitude = L - 180 - ((12.965 / 60) / 60) + ((dL / 60) / 60) + ((aberration / 60) / 60);
+            ApparentGeocentricLongitude = L - 180 - (12.965 / 3600) + (dL / 3600) + (aberration / 3600);
             double correction = 58 * MathHelper.Sin((int)Equinox * 90 - ApparentGeocentricLongitude);
             double JDE0 = JDE + correction;
             if (correction <= 0.0000005)
