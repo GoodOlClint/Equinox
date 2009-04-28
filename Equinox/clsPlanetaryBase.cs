@@ -7,6 +7,8 @@ namespace Equinox
     public abstract class PlanetaryBase : MathBase
     {
         protected ThreadSafeCollection<PeriodicTerm> PeriodicTerms = new ThreadSafeCollection<PeriodicTerm>();
+        protected ThreadSafeCollection<PeriodicNutationTerm> NutationTerms = new ThreadSafeCollection<PeriodicNutationTerm>();
+        protected ThreadSafeCollection<PeriodicNutationTerm> NutationCorrectionsTerms = new ThreadSafeCollection<PeriodicNutationTerm>();
         public abstract string PlanetName { get; }
 
         public PlanetaryBase()
@@ -14,6 +16,7 @@ namespace Equinox
             this.BuildLatitude();
             this.BuildLongitude();
             this.BuildRadiusVector();
+            this.BuildNutationTables();
         }
         /// <summary>
         /// 
@@ -67,6 +70,41 @@ namespace Equinox
             return QueryDatabase(JDE, acuracyLevel, SeriesType.R);
         }
 
+        public double CalculateNutation(double JDE)
+        {
+            double dP = 0;
+            double dE = 0;
+            double D, M, Mp, F, O, T;
+            T = (JDE - 2451545.0) / 36525;
+            T = Math.Round(T, 12);
+            D = 297.850363055 + (307.11148 * T) + MathHelper.Rev(444960 * T) - (0.001914166667 * Math.Pow(T, 2)) + (Math.Pow(T, 3) / 189473.6842);
+            M = 357.527723333 + (359.05034 * T) + MathHelper.Rev(35640 * T) - (0.0001602777778 * Math.Pow(T, 2)) - (Math.Pow(T, 3) / 300000);
+            Mp = 134.962981389 + (198.867398056 * T) + MathHelper.Rev(477000 * T) + (0.008697222222 * Math.Pow(T, 2)) + (Math.Pow(T, 3) / 56250);
+            F = 93.271910277 + (82.017538055 * T) + MathHelper.Rev(483120 * T) - (0.0036825 * Math.Pow(T, 2)) + (Math.Pow(T, 3) / 327272.7273);
+            O = 125.044522222 - (134.136260833 * T) - MathHelper.Rev(1800 * T) + (0.002070833333 * Math.Pow(T, 2)) + (Math.Pow(T, 3) / 450000);
+            var query = from PeriodicNutationTerm term in NutationTerms
+                        select term;
+            foreach (PeriodicNutationTerm PNT in query)
+            {
+                double Sine, Cos;
+                Sine = MathHelper.Sin(PNT.D * D + PNT.M * M + PNT.Mp * Mp + PNT.F * F + PNT.O * O);
+                Cos = MathHelper.Cos((PNT.D * D) + (PNT.M * M) + (PNT.Mp * Mp) + (PNT.F * F) + (PNT.O * O));
+                dP += (PNT.Coef1 + T * PNT.Coef2) * Sine;
+                dE += (PNT.Coef3 + T * PNT.Coef4) * Cos;
+            }
+/*
+            query = from PeriodicNutationTerm term in NutationCorrectionsTerms
+                    select term;
+            foreach (PeriodicNutationTerm PNT in query)
+            {
+                double Sine, Cos;
+                Sine = MathHelper.Sin((PNT.D * D) + (PNT.M * M) + (PNT.Mp * Mp) + (PNT.F * F) + (PNT.O * O));
+                Cos = MathHelper.Cos((PNT.D * D) + (PNT.M * M) + (PNT.Mp * Mp) + (PNT.F * F) + (PNT.O * O));
+                dP += 0.1 * (PNT.Coef1 * Sine + PNT.Coef2 * Cos);
+                dP += 0.1 * (PNT.Coef3 * Cos + PNT.Coef4 * Sine);
+            }*/
+            return Math.Round(3600000 * (dP / 36000000)) / 1000;
+        }
         protected double QueryDatabase(double JDE, int acuracyLevel, SeriesType series)
         {
             List<long> lst = new List<long>();
@@ -111,6 +149,166 @@ namespace Equinox
             public double B { get { return this.Values["B"]; } set { this.Values["B"] = value; } }
             public double C { get { return this.Values["C"]; } set { this.Values["C"] = value; } }
             public string Series { get { return this.series; } set { this.series = value; } }
+        }
+
+        protected class PeriodicNutationTerm
+        {
+            private Dictionary<string, double> Values = new Dictionary<string, double>();
+            public PeriodicNutationTerm() { }
+            public PeriodicNutationTerm(double M, double Mp, double F, double D, double O, double Coef1, double Coef2, double Coef3, double Coef4)
+            { this.D = D; this.M = M; this.Mp = Mp; this.F = F; this.O = O; this.Coef1 = Coef1; this.Coef2 = Coef2; this.Coef3 = Coef3; this.Coef4 = Coef4; }
+            public double D { get { return this.Values["D"]; } set { this.Values["D"] = value; } }
+            public double M { get { return this.Values["M"]; } set { this.Values["M"] = value; } }
+            public double Mp { get { return this.Values["Mp"]; } set { this.Values["Mp"] = value; } }
+            public double F { get { return this.Values["F"]; } set { this.Values["F"] = value; } }
+            public double O { get { return this.Values["O"]; } set { this.Values["O"] = value; } }
+            public double Coef1 { get { return this.Values["Coef1"]; } set { this.Values["Coef1"] = value; } }
+            public double Coef2 { get { return this.Values["Coef2"]; } set { this.Values["Coef2"] = value; } }
+            public double Coef3 { get { return this.Values["Coef3"]; } set { this.Values["Coef3"] = value; } }
+            public double Coef4 { get { return this.Values["Coef4"]; } set { this.Values["Coef4"] = value; } }
+            public double CalculateLongitude(double JDE)
+            {
+                double T = (JDE - 2451545.0) / 36525;
+                double D, M, Mp, F, O;
+                D = MathHelper.Rev(297.85036 + (445267.111480 * T) - (0.0019142 * Math.Pow(T, 2)) + (Math.Pow(T, 3) / 189474));
+                M = MathHelper.Rev(357.52772 + (35999.050340 * T) - (0.0001603 * Math.Pow(T, 2)) - (Math.Pow(T, 3) / 300000));
+                Mp = MathHelper.Rev(134.96298 + (477198.867389 * T) + (0.0087972 * Math.Pow(T, 2)) + (Math.Pow(T, 3) / 56270));
+                F = MathHelper.Rev(93.27191 + (483202.017538 * T) - (0.0036825 * Math.Pow(T, 2)) + (Math.Pow(T, 3) / 327270));
+                O = MathHelper.Rev(125.04452 - (1934.136261 * T) + (0.0020708 * Math.Pow(T, 2)) + (Math.Pow(T, 3) / 450000));
+                double Sine = MathHelper.Sin((this.D * D) + (this.M * M) + (this.Mp * Mp) + (this.F * F) + (this.O * O));
+                return (Coef1 + Coef2 * T) * Sine;
+            }
+            public double CalculateLongitudeCoefficients(double T, double D, double M, double Mp, double F, double O)
+            {
+                //double Sine = MathHelper.Sin((this.D * D) + (this.M * M) + (this.Mp * Mp) + (this.F * F) + (this.O * O));
+                return (Coef1 + Coef2 * T);
+            }
+
+            public double CalculateObliquity(double JDE)
+            {
+                double T = (JDE - 2451545.0) / 365250;
+                double D, M, Mp, F, O;
+                D = MathHelper.Rev(297.85036 + (445267.111480 * T) - (0.0019142 * Math.Pow(T, 2)) + (Math.Pow(T, 3) / 189474));
+                M = MathHelper.Rev(357.52772 + (35999.050340 * T) - (0.0001603 * Math.Pow(T, 2)) - (Math.Pow(T, 3) / 300000));
+                Mp = MathHelper.Rev(134.96298 + (477198.867389 * T) + (0.0087972 * Math.Pow(T, 2)) + (Math.Pow(T, 3) / 56270));
+                F = MathHelper.Rev(93.27191 + (483202.017538 * T) - (0.0036825 * Math.Pow(T, 2)) + (Math.Pow(T, 3) / 327270));
+                O = MathHelper.Rev(125.04452 - (1934.136261 * T) + (0.0020708 * Math.Pow(T, 2)) + (Math.Pow(T, 3) / 450000));
+                double Cos = MathHelper.Cos((this.D * D) + (this.M * M) + (this.Mp * Mp) + (this.F * F) + (this.O * O));
+                return (0.0001 * (Coef3 + Coef4 * T)) * Cos;
+            }
+        }
+        protected void BuildNutationTables()
+        {
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 0, 0, 0, 1, -171996, -174.2, 92025, 8.9));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 0, 2, -2, 2, -13187, -1.6, 5736, -3.1));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 0, 2, 0, 2, -2274, -0.2, 977, -0.5));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 0, 0, 0, 2, 2062, 0.2, -895, 0.5));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 1, 0, 0, 0, 1426, -3.4, 54, -0.1));
+            this.NutationTerms.Add(new PeriodicNutationTerm(1, 0, 0, 0, 0, 712, 0.1, -7, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 1, 2, -2, 2, -517, 1.2, 224, -0.6));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 0, 2, 0, 1, -386, -0.4, 200, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(1, 0, 2, 0, 2, -301, 0, 129, -0.1));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, -1, 2, -2, 2, 217, -0.5, -95, 0.3));
+            this.NutationTerms.Add(new PeriodicNutationTerm(1, 0, 0, -2, 0, -158, 0, -1, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 0, 2, -2, 1, 129, 0.1, -70, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(-1, 0, 2, 0, 2, 123, 0, -53, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(1, 0, 0, 0, 1, 63, 0.1, -33, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 0, 0, 2, 0, 63, 0, -2, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(-1, 0, 2, 2, 2, -59, 0, 26, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(-1, 0, 0, 0, 1, -58, -0.1, 32, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(1, 0, 2, 0, 1, -51, 0, 27, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(2, 0, 0, -2, 0, 48, 0, 1, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(-2, 0, 2, 0, 1, 46, 0, -24, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 0, 2, 2, 2, -38, 0, 16, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(2, 0, 2, 0, 2, -31, 0, 13, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(2, 0, 0, 0, 0, 29, 0, -1, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(1, 0, 2, -2, 2, 29, 0, -12, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 0, 2, 0, 0, 26, 0, -1, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 0, 2, -2, 0, -22, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(-1, 0, 2, 0, 1, 21, 0, -10, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 2, 0, 0, 0, 17, -0.1, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 2, 2, -2, 2, -16, 0.1, 7, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(-1, 0, 0, 2, 1, 16, 0, -8, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 1, 0, 0, 1, -15, 0, 9, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(1, 0, 0, -2, 1, -13, 0, 7, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, -1, 0, 0, 1, -12, 0, 6, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(2, 0, -2, 0, 0, 11, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(-1, 0, 2, 2, 1, -10, 0, 5, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(1, 0, 2, 2, 2, -8, 0, 3, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, -1, 2, 0, 2, -7, 0, 3, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 0, 2, 2, 1, -7, 0, 3, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(1, 1, 0, -2, 0, -7, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 1, 2, 0, 2, 7, 0, -3, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 0, 2, 1, -6, 0, 3, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 0, 0, 2, 1, -6, 0, 3, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(2, 0, 2, -2, 2, 6, 0, -3, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(1, 0, 0, 2, 0, 6, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(1, 0, 2, -2, 1, 6, 0, -3, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 0, 0, -2, 1, -5, 0, 3, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, -1, 2, -2, 1, -5, 0, 3, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(2, 0, 2, 0, 1, -5, 0, 3, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(1, -1, 0, 0, 0, 5, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(1, 0, 0, -1, 0, -4, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 0, 0, 1, 0, -4, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 1, 0, -2, 0, -4, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(1, 0, -2, 0, 0, 4, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(2, 0, 0, -2, 1, 4, 0, -2, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 1, 2, -2, 1, 4, 0, -2, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(1, 1, 0, 0, 0, -3, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(1, -1, 0, -1, 0, -3, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(-1, -1, 2, 2, 2, -3, 0, 1, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, -1, 2, 2, 2, -3, 0, 1, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(1, -1, 2, 0, 2, -3, 0, 1, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(3, 0, 2, 0, 2, -3, 0, 1, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(-2, 0, 2, 0, 2, -3, 0, 1, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(1, 0, 2, 0, 0, 3, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(-1, 0, 2, 4, 2, -2, 0, 1, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(1, 0, 0, 0, 2, -2, 0, 1, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(-1, 0, 2, -2, 1, -2, 0, 1, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, -2, 2, -2, 1, -2, 0, 1, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(-2, 0, 0, 0, 1, -2, 0, 1, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(2, 0, 0, 0, 1, 2, 0, -1, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(3, 0, 0, 0, 0, 2, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(1, 1, 2, 0, 2, 2, 0, -1, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 0, 2, 1, 2, 2, 0, -1, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(1, 0, 0, 2, 1, -1, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(1, 0, 2, 2, 1, -1, 0, 1, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(1, 1, 0, -2, 1, -1, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 1, 0, 2, 0, -1, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 1, 2, -2, 0, -1, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 1, -2, 2, 0, -1, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(1, 0, -2, 2, 0, -1, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(1, 0, -2, -2, 0, -1, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(1, 0, 2, -2, 0, -1, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(1, 0, 0, -4, 0, -1, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(2, 0, 0, -4, 0, -1, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 0, 2, 4, 2, -1, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 0, 2, -1, 2, -1, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(-2, 0, 2, 4, 2, -1, 0, 1, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(2, 0, 2, 2, 2, -1, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, -1, 2, 0, 1, -1, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 0, -2, 0, 1, -1, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 0, 4, -2, 2, 1, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 1, 0, 0, 2, 1, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(1, 1, 2, -2, 2, 1, 0, -1, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(3, 0, 2, -2, 2, 1, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(-2, 0, 2, 2, 2, 1, 0, -1, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(-1, 0, 0, 0, 2, 1, 0, -1, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 0, -2, 2, 1, 1, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 1, 2, 0, 1, 1, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(-1, 0, 4, 0, 2, 1, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(2, 1, 0, -2, 0, 1, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(2, 0, 0, 2, 0, 1, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(2, 0, 2, -2, 1, 1, 0, -1, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(2, 0, -2, 0, 1, 1, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(1, -1, 0, -2, 0, 1, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(-1, 0, 0, 1, 1, 1, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(-1, -1, 0, 2, 1, 1, 0, 0, 0));
+            this.NutationTerms.Add(new PeriodicNutationTerm(0, 1, 0, 1, 0, 1, 0, 0, 0));
+            this.NutationCorrectionsTerms.Add(new PeriodicNutationTerm(0, 0, 0, 0, 1, -725, 417, 414, 224));
+            this.NutationCorrectionsTerms.Add(new PeriodicNutationTerm(0, 1, 0, 0, 0, 523, 61, 208, -24));
+            this.NutationCorrectionsTerms.Add(new PeriodicNutationTerm(0, 0, 2, -2, 2, 102, -118, -41, -47));
+            this.NutationCorrectionsTerms.Add(new PeriodicNutationTerm(0, 0, 2, 0, 2, -81, 0, 32, 0));
         }
     }
 }

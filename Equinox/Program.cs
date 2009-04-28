@@ -1,4 +1,5 @@
 ﻿using System;
+using Equinox.Planets;
 
 namespace Equinox
 {
@@ -68,10 +69,13 @@ namespace Equinox
             //aberration = 20.4898 / R;
             //double ApparentGeocentricLongitude;
             //ApparentGeocentricLongitude = L - 180 + dL + aberration;
+
+            Earth earth = new Earth();
+            double Nut = earth.CalculateNutation(2446895.5);
             double JDE0 = Equinox.GetApproximateEquinox(1962, Equinox.EquinoxType.SumerSolstice);
             double JDE = Equinox.CorrectEquinox(JDE0, Equinox.EquinoxType.SumerSolstice);
             AdvancedDateTime ADT = AdvancedDateTime.FromJulianDay(JDE);
-            Console.WriteLine("{0}/{1}/{2} {3:00}:{4:00}:{5:00}\t{6}", ADT.Year, ADT.Month, ADT.Day, ADT.Hour, ADT.Minute, ADT.Second, ADT.Era);
+            Console.WriteLine("{0}/{1}/{2} {3:00}:{4:00}:{5:00}{6:.0}\t{7}", ADT.Year, (int)ADT.Month, ADT.Day, ADT.Hour, ADT.Minute, ADT.Second, ((double)ADT.Millisecond) / 1000d, ADT.Era);
             //}
 
             //Console.Write(Helper.GetEquinox(1962, Helper.Equinox.SumerSolstice));

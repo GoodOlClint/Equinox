@@ -118,15 +118,16 @@ namespace Equinox
                 year = C - 4716;
             else
                 year = C - 4715;
-            double hour, minute, second, f;
+            double hour, minute, second, f, millisecond;
             double dayFrac;
             dayFrac = JD - (int)Math.Truncate(JD);
             hour = Math.Floor(dayFrac * 24.0);
             minute = Math.Floor((dayFrac * 24.0 - hour) * 60.0);
             f = ((dayFrac * 24.0 - hour) * 60.0 - minute) * 60.0;
             second = Math.Floor(f);
-            if (f > 0.5) second++;
-            return new AdvancedDateTime(year, (Month)month, (int)day, (int)hour, (int)minute, (int)second);
+            //if (f > 0.5) second++;
+            millisecond = MathHelper.DEC(f) * 1000;
+            return new AdvancedDateTime(year, (Month)month, (int)day, (int)hour, (int)minute, (int)second, (int)millisecond);
         }
         public static int MonthLength(Month month, int year)
         {

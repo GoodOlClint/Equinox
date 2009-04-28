@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-
+using Equinox.Planets;
 namespace Equinox
 {
     class Equinox
@@ -99,14 +99,15 @@ namespace Equinox
             double L = earth.CalculateHelocentricLongitude(JDE, 5);
             double B = earth.CalculateHelocentricLatitude(JDE, 4);
             double R = earth.CalculateRadiusVector(JDE, 5);
-            double dL, dB, aberration;
+            double dL, dB, aberration, nutation;
             earth.CorrectLB(L, B, JDE, out dL, out  dB);
             aberration = -(20.4898 / R);
+            nutation = MathHelper.Rev(earth.CalculateNutation(JDE));
             double ApparentGeocentricLongitude;
-            ApparentGeocentricLongitude = L - 180 - (12.965 / 3600) + (dL / 3600) + (aberration / 3600);
+            ApparentGeocentricLongitude = L - 180 - (nutation / 3600) + (dL / 3600) + (aberration / 3600);
             double correction = 58 * MathHelper.Sin((int)Equinox * 90 - ApparentGeocentricLongitude);
             double JDE0 = JDE + correction;
-            if (correction <= 0.0000005)
+            if (correction <= 0.0000005 && correction >= -0.0000005)
             { return Math.Round(JDE0, 5); ; }
             else
             { return CorrectEquinox(JDE0, Equinox); }
